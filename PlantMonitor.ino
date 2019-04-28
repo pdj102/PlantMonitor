@@ -14,11 +14,13 @@
 
 // define pins
 const int moistureDigitalPin = D5;  // Digital input pin that the soil moisture digital analog output is attached to
-const int moistureAnaloguePin = D2; // Analogue input pin the DH22 analogue output is attached to
+const int moistureAnaloguePin = A0; // Analogue input pin the DH22 analogue output is attached to
 const int dh22Pin = D4;      // Digital input pin the DH22 digital output is attached to
 
 // Blynk Auth Token 
-char auth[] = "a86fa18453a3497f985fdac8268ddc8a";
+// char auth[] = "your auth token here" or specify it in auth.h;
+#include "auth.h"
+
 
 
 DHTesp dht;
