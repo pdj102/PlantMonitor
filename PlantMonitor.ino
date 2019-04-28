@@ -1,20 +1,25 @@
-
-#define BLYNK_PRINT Serial
-
 #include <ESP8266WiFi.h>
+
+// Blynk IoT cloud
+#define BLYNK_PRINT Serial
 #include <BlynkSimpleEsp8266.h>
+
+// ESP8266 WiFi Connection Manager with fallback web configuration portal
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+
+// DHT sensor library
 #include "DHTesp.h"
 
-const int moisturePin = 5;  // Digital input pin that the soil moisture digital analog output is attached to
-const int dh22Pin = 4;      // Digital input pin the DH22 digital output is attached to
+// define pins
+const int moistureDigitalPin = D5;  // Digital input pin that the soil moisture digital analog output is attached to
+const int moistureAnaloguePin = D2; // Analogue input pin the DH22 analogue output is attached to
+const int dh22Pin = D4;      // Digital input pin the DH22 digital output is attached to
 
 // Blynk Auth Token 
 char auth[] = "a86fa18453a3497f985fdac8268ddc8a";
 
-// Your WiFi credentials.
-// Set password to "" for open networks.
-char ssid[] = "fwextern";
-char pass[] = "2018FW#01";
 
 DHTesp dht;
 BlynkTimer timer;
@@ -25,15 +30,28 @@ void myTimerEvent()
  
   float temperature = dht.getTemperature();
   float humidity = dht.getHumidity();
-  int soil = digitalRead(moisturePin);
+  int soilD = digitalRead(moistureDigitalPin);
+  int soilA = analogRead(moistureAnaloguePin);
   
   Blynk.virtualWrite(V5, temperature);
   Blynk.virtualWrite(V4, humidity);
-  Blynk.virtualWrite(V3, soil);
+  Blynk.virtualWrite(V3, soilA);
 
-  // soil warning - sensor returns '1' when soil is wet 
-  // to turn Soil dry alarm on send 255. Send '0' to turn alarm off
-  Blynk.virtualWrite(V2, soil==0 ? 255 : 0);
+  // soil warning - sensor returns '0' when soil is wet '1' when dry
+  // to turn Soil dry alarm on send 255 when wet
+  Blynk.virtualWrite(V2, soilD==0 ? 0 : 255);
+
+  Serial.print("Temp:");
+  Serial.println(temperature);
+
+  Serial.print("Humidity:");
+  Serial.println(humidity);
+
+  Serial.print("Soil mositure (analogue):");
+  Serial.println(soilA);
+
+  Serial.print("Soil mositure (digital):");
+  Serial.println(soilD);  
 }
 
 void setup() {
@@ -42,8 +60,14 @@ void setup() {
   // init DH22 module
   dht.setup(dh22Pin, DHTesp::DHT22);
 
+  // Connect to wifi. If unable to connect, switch to AP mode to allow user to config wifi settings
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("AutoConnectAP");  
+
+  Serial.println("Connected to wifi.");
+
   // Connect to wifi and Blynk
-  Blynk.begin(auth, ssid, pass);
+  Blynk.config(auth);
 
   // Setup a function to be called every 10 seconds
   timer.setInterval(10000L, myTimerEvent);
